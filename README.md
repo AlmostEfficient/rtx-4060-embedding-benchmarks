@@ -9,6 +9,11 @@ I wanted to know if an RTX 4060 is any good for running embedding models locally
 - 8 GB of VRAM is way more than you need for this. The best config peaked at 2.7 GB.
 - Use **fp16** weights, not q4. q4 was slower on both GPUs.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="charts/throughput-dark.svg">
+  <img alt="Bar chart of frames per second at fp16 vision, q4 text, batch 4. JPEG in, vector out: RTX 4060 WebGPU 7.38, Mac mini WebGPU 3.31. Inference only: RTX 4060 CUDA 19.48, RTX 4060 WebGPU 7.83, Mac mini WebGPU 3.41." src="charts/throughput-light.svg">
+</picture>
+
 Tested October 2026. One model, small sample. Caveats at the bottom.
 
 ## What I ran
@@ -79,6 +84,11 @@ The CUDA row is inference only. Decode + preprocessing measured about 7.6 ms per
 ## Things I learned
 
 **q4 is slower than fp16 on both GPUs.** Smaller file, slower run. On the Mac, switching the vision encoder from q4 to fp16 tripled throughput (1.07 → 3.19 fps). On CUDA, q4 → fp16 went from 12.1 to 19.5 fps at batch 4. My guess is that q4 weights get dequantized on the fly (ONNX's `MatMulNBits` op), so you pay compute to save memory you didn't need saved. The text model stayed q4 everywhere since it's only 6 ms of the 51.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="charts/q4-vs-fp16-dark.svg">
+  <img alt="Dumbbell chart of frames per second at batch 1, q4 vision vs fp16 vision. Mac mini WebGPU 1.07 to 3.19 (3.0x). RTX 4060 WebGPU 6.03 to 6.97 (1.16x). RTX 4060 CUDA, inference only, 10.41 to 15.00 (1.44x)." src="charts/q4-vs-fp16-light.svg">
+</picture>
 
 **Batch 4 is the sweet spot.** Going from batch 1 to 4 helped on CUDA (15.0 → 19.5 fps). Batch 8 added nothing and used more VRAM (2.7 → 4.3 GB).
 
